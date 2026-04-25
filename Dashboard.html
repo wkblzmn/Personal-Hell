@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUBT CSE — Course Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;--radius:6px;--radius-lg:10px}
+[data-theme="dark"]{
+  --bg:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;--bg4:#252525;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);
+  --text:#e8e8e8;--text2:#888;--text3:#555;
+  --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-bd:rgba(74,222,128,0.25);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.1);--red-bd:rgba(248,113,113,0.25);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.1);--amber-bd:rgba(251,191,36,0.25);
+  --blue:#60a5fa;--blue-bg:rgba(96,165,250,0.1);--blue-bd:rgba(96,165,250,0.25);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.12);--purple-bd:rgba(167,139,250,0.3)
+}
+[data-theme="light"]{
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#eeeeed;--bg4:#e4e4e2;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.18);
+  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --green:#16a34a;--green-bg:rgba(22,163,74,0.08);--green-bd:rgba(22,163,74,0.3);
+  --red:#dc2626;--red-bg:rgba(220,38,38,0.08);--red-bd:rgba(220,38,38,0.3);
+  --amber:#b45309;--amber-bg:rgba(180,83,9,0.08);--amber-bd:rgba(180,83,9,0.3);
+  --blue:#2563eb;--blue-bg:rgba(37,99,235,0.08);--blue-bd:rgba(37,99,235,0.3);
+  --purple:#7c3aed;--purple-bg:rgba(124,58,237,0.08);--purple-bd:rgba(124,58,237,0.3)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh;transition:background .2s,color .2s}
+header{border-bottom:1px solid var(--border);padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.header-left{display:flex;align-items:baseline;gap:.75rem;flex-wrap:wrap}
+header h1{font-size:14px;font-weight:500;letter-spacing:.02em}
+.hint{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:5px 11px;color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--font);transition:all .15s}
+.theme-btn:hover{border-color:var(--border2);color:var(--text)}
+.container{max-width:1100px;margin:0 auto;padding:1.5rem 2rem 4rem}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:.75rem}
+.mc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.85rem 1rem;cursor:pointer;transition:border-color .15s,background .15s}
+.mc:hover{border-color:var(--border2)}
+.mc.active{border-color:var(--border2);background:var(--bg3)}
+.mc .lbl{font-size:10px;color:var(--text3);margin-bottom:5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.mc .val{font-size:24px;font-weight:300;font-family:var(--mono);margin-bottom:1px}
+.mc .sub{font-size:10px;color:var(--text3)}
+.mc.all .val{color:var(--text)}.mc.passed .val{color:var(--green)}.mc.failed .val{color:var(--red)}.mc.incomplete .val{color:var(--amber)}.mc.remaining .val{color:var(--blue)}
+.bar{height:3px;border-radius:2px;background:var(--bg3);display:flex;overflow:hidden;margin-bottom:1.5rem}
+.bar-seg{height:100%;transition:width .5s ease}
+.seg-p{background:var(--green)}.seg-f{background:var(--red)}.seg-i{background:var(--amber)}
+
+/* Calculator */
+.calc-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+.calc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;cursor:pointer;user-select:none}
+.calc-title{font-size:13px;font-weight:500;color:var(--text)}
+.calc-toggle{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.calc-body{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.calc-body.hidden{display:none}
+.field-group{margin-bottom:1rem}
+.field-group label{display:block;font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type=range]{flex:1;accent-color:var(--blue);cursor:pointer}
+.slider-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--blue);min-width:32px;text-align:right}
+.cr-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s}
+.cr-input:focus{border-color:var(--border2)}
+.cr-breakdown{display:flex;flex-direction:column;gap:0;margin-bottom:1rem;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.cr-row{display:flex;justify-content:space-between;font-size:12px;padding:7px 10px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.cr-row:last-child{border-bottom:none;background:var(--bg4)}
+.cr-label{color:var(--text2)}
+.cr-val{font-family:var(--mono);font-size:12px;font-weight:500}
+.red{color:var(--red)}.amber{color:var(--amber)}.blue{color:var(--blue)}.bold{color:var(--text)}
+.result-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem}
+.res-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.res-num{font-size:30px;font-weight:300;font-family:var(--mono);color:var(--purple);margin-bottom:2px}
+.res-sub{font-size:12px;color:var(--text2);margin-bottom:10px}
+.res-date{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.res-hint{font-size:11px;color:var(--text3)}
+.tl{margin-top:1rem}
+.tl-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.tl-items{display:flex;flex-wrap:wrap;gap:4px}
+.tl-sem{font-size:10px;font-family:var(--mono);padding:3px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text3)}
+.tl-past{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.tl-now{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue);font-weight:500}
+.tl-future{background:var(--bg3);border-color:var(--border);color:var(--text3)}
+.tl-end{background:var(--purple-bg);border-color:var(--purple-bd);color:var(--purple);font-weight:500}
+.warn-box{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--radius);padding:.6rem .85rem;font-size:11px;color:var(--amber);margin-top:.75rem;line-height:1.5}
+
+/* Toolbar + table */
+.toolbar{display:flex;gap:10px;margin-bottom:1rem;align-items:center;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:180px;position:relative}
+.search-wrap input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px 7px 30px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--border2)}
+.search-wrap input::placeholder{color:var(--text3)}
+.s-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.sort-sel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;color:var(--text2);font-family:var(--font);font-size:12px;outline:none;cursor:pointer}
+.count{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap}
+.tbl-wrap{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--bg2);padding:8px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);user-select:none;cursor:pointer;white-space:nowrap}
+thead th:hover{color:var(--text2)}
+thead th.sorted{color:var(--blue)}
+tbody tr{cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg2)}
+tbody td{padding:8px 12px;font-size:13px}
+.td-code{font-family:var(--mono);font-size:12px;color:var(--text2);white-space:nowrap}
+.td-title{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-cr{font-family:var(--mono);font-size:12px;color:var(--text3)}
+.td-grade{font-family:var(--mono);font-size:12px;font-weight:500}
+.td-sem{font-size:11px;color:var(--text3);white-space:nowrap}
+.grade-good{color:var(--green)}.grade-ok{color:var(--amber)}.grade-fail{color:var(--red)}.grade-na{color:var(--text3)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);padding:3px 7px;border-radius:4px;font-weight:500;white-space:nowrap}
+.bp{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.bf{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.bi{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.br{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-p{background:var(--green)}.dot-f{background:var(--red)}.dot-i{background:var(--amber)}.dot-r{background:var(--blue)}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px}
+.footer-bar{margin-top:1.25rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.footer-note{font-size:11px;color:var(--text3);font-family:var(--mono);flex:1}
+.btn-sm{padding:5px 11px;font-size:11px;border-radius:var(--radius);font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
+.btn-sm:hover{border-color:var(--border2);color:var(--text2)}
+
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:420px;max-width:92vw;padding:1.5rem}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem}
+.modal-code{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:3px}
+.modal-title{font-size:15px;font-weight:500;line-height:1.3}
+.modal-close{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 0 0 12px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.field select,.field input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none}
+.field select:focus,.field input[type=text]:focus{border-color:var(--border2)}
+.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.status-opt{border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:7px;font-size:13px}
+.status-opt:hover{border-color:var(--border2);background:var(--bg3)}
+.sel-passed{border-color:var(--green-bd)!important;background:var(--green-bg)!important;color:var(--green)!important}
+.sel-failed{border-color:var(--red-bd)!important;background:var(--red-bg)!important;color:var(--red)!important}
+.sel-incomplete{border-color:var(--amber-bd)!important;background:var(--amber-bg)!important;color:var(--amber)!important}
+.sel-remaining{border-color:var(--blue-bd)!important;background:var(--blue-bg)!important;color:var(--blue)!important}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border)}
+.btn{padding:7px 16px;border-radius:var(--radius);font-size:13px;font-family:var(--font);cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s}
+.btn:hover{border-color:var(--border2);color:var(--text)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:500}
+.btn-primary:hover{opacity:.88}
+.btn-cancel{color:var(--red);border-color:var(--red-bd)}
+.btn-cancel:hover{background:var(--red-bg)}
+@media(max-width:700px){
+  .container{padding:1rem}
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  header{padding:1rem}
+  .td-sem{display:none}
+  .calc-body{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>BUBT CSE — Course Tracker</h1>
+    <span class="hint">click any row to update status</span>
+  </div>
+  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀ Light</button>
+</header>
+
+<div class="container">
+
+  <div class="metrics" id="metrics"></div>
+  <div class="bar" id="bar"></div>
+
+  <!-- CALCULATOR -->
+  <div class="calc-card">
+    <div class="calc-header" onclick="toggleCalc()">
+      <span class="calc-title">Completion time calculator</span>
+      <span class="calc-toggle" id="calc-toggle">▾ collapse</span>
+    </div>
+    <div class="calc-body" id="calc-body">
+      <div>
+        <div class="field-group">
+          <label>Pending credits breakdown</label>
+          <div class="cr-breakdown" id="cr-breakdown"></div>
+        </div>
+        <div class="field-group">
+          <label>Credits per semester (max 18–20)</label>
+          <div class="slider-row">
+            <input type="range" id="cr-slider" min="9" max="20" value="15" step="0.75" oninput="calcUpdate()">
+            <span class="slider-val" id="cr-val">15</span>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Elective credits still needed</label>
+          <input type="number" class="cr-input" id="elec-input" min="0" max="60" value="18" oninput="calcUpdate()">
+        </div>
+        <div id="calc-warning"></div>
+      </div>
+      <div>
+        <div class="result-box">
+          <div class="res-lbl">Semesters remaining</div>
+          <div class="res-num" id="res-sems">—</div>
+          <div class="res-sub" id="res-sub">calculating...</div>
+          <div class="res-date" id="res-date"></div>
+          <div class="res-hint" id="res-hint"></div>
+        </div>
+        <div class="tl" id="timeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="s-icon">⌕</span>
+      <input type="text" id="search" placeholder="Search code or title..." oninput="render()">
+    </div>
+    <select class="sort-sel" id="sort-sel" onchange="render()">
+      <option value="code">Sort: Code</option>
+      <option value="status">Sort: Status</option>
+      <option value="credit">Sort: Credits</option>
+      <option value="grade">Sort: Grade</option>
+    </select>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="cycleSort('code')" id="th-code">Code <span id="arr-code"></span></th>
+          <th>Title</th>
+          <th onclick="cycleSort('credit')" id="th-credit">Cr <span id="arr-credit"></span></th>
+          <th onclick="cycleSort('grade')" id="th-grade">Grade <span id="arr-grade"></span></th>
+          <th class="td-sem">Semester</th>
+          <th onclick="cycleSort('status')" id="th-status">Status <span id="arr-status"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer-bar">
+    <span class="footer-note" id="footer-note"></span>
+    <button class="btn-sm" onclick="exportData()">Export JSON</button>
+    <button class="btn-sm" onclick="importData()">Import JSON</button>
+    <button class="btn-sm" onclick="confirmReset()">Reset all</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-code" id="m-code"></div>
+        <div class="modal-title" id="m-title"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <div class="status-grid">
+        <div class="status-opt" data-s="passed"     onclick="selectStatus('passed')">    <span class="dot dot-p"></span>Passed</div>
+        <div class="status-opt" data-s="failed"     onclick="selectStatus('failed')">    <span class="dot dot-f"></span>Failed</div>
+        <div class="status-opt" data-s="incomplete" onclick="selectStatus('incomplete')"><span class="dot dot-i"></span>Incomplete</div>
+        <div class="status-opt" data-s="remaining"  onclick="selectStatus('remaining')"> <span class="dot dot-r"></span>Remaining</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Grade</label>
+      <select id="m-grade">
+        <option value="-">— not graded</option>
+        <option value="A+">A+</option><option value="A">A</option><option value="A-">A-</option>
+        <option value="B+">B+</option><option value="B">B</option><option value="B-">B-</option>
+        <option value="C+">C+</option><option value="C">C</option><option value="C-">C-</option>
+        <option value="D">D</option><option value="F">F</option><option value="I">I (Incomplete)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Semester</label>
+      <input type="text" id="m-sem" placeholder="e.g. Summer 2026">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModalDirect()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+const DEFAULT_COURSES=[
+  {code:'CSE 100',title:'Software Development I',cr:0.75,grade:'B',sem:'Fall 2020-21',s:'passed'},
+  {code:'CSE 103',title:'Discrete Mathematics',cr:3,grade:'B',sem:'Fall 2020-21',s:'passed'},
+  {code:'CSE 111',title:'Structured Programming Language',cr:3,grade:'B+',sem:'Spring 2020',s:'passed'},
+  {code:'CSE 112',title:'Structured Programming Language Lab',cr:1.5,grade:'B+',sem:'Spring 2020',s:'passed'},
+  {code:'CSE 121',title:'Object Oriented Programming Language',cr:3,grade:'B',sem:'Summer 2020',s:'passed'},
+  {code:'CSE 122',title:'OOP Language Lab',cr:1.5,grade:'D',sem:'Summer 2020',s:'passed'},
+  {code:'CSE 200',title:'Software Development II',cr:0.75,grade:'C+',sem:'Fall 2021-22',s:'passed'},
+  {code:'CSE 207',title:'Database Systems',cr:3,grade:'C',sem:'Summer 2021',s:'passed'},
+  {code:'CSE 213',title:'Theory of Computing & Automata',cr:3,grade:'A-',sem:'Spring 2021',s:'passed'},
+  {code:'CSE 231',title:'Data Structures',cr:3,grade:'A-',sem:'Fall 2020-21',s:'passed'},
+  {code:'CSE 241',title:'Algorithms',cr:3,grade:'D',sem:'Spring 2021',s:'passed'},
+  {code:'CSE 242',title:'Algorithms Lab',cr:1.5,grade:'C+',sem:'Spring 2021',s:'passed'},
+  {code:'CSE 319',title:'Computer Networks',cr:3,grade:'D',sem:'Summer 2022',s:'passed'},
+  {code:'CSE 320',title:'Computer Networks Lab',cr:1.5,grade:'B',sem:'Summer 2022',s:'passed'},
+  {code:'CSE 352',title:'AI and Expert System Lab',cr:1.5,grade:'B+',sem:'Fall 2022-23',s:'passed'},
+  {code:'ACT 201',title:'Accounting Fundamentals',cr:2,grade:'C',sem:'Summer 2021',s:'passed'},
+  {code:'ECO 101',title:'Principles of Economics',cr:2,grade:'A-',sem:'Fall 2020-21',s:'passed'},
+  {code:'EEE 101',title:'Electrical Technology',cr:3,grade:'B',sem:'Summer 2020',s:'passed'},
+  {code:'EEE 102',title:'Electrical Technology Lab',cr:1.5,grade:'A',sem:'Summer 2020',s:'passed'},
+  {code:'EEE 211',title:'Electronic Devices and Circuits',cr:3,grade:'B+',sem:'Spring 2021',s:'passed'},
+  {code:'ENG 101',title:'English Language-I',cr:3,grade:'A',sem:'Spring 2020',s:'passed'},
+  {code:'ENG 111',title:'English Language-II',cr:3,grade:'A',sem:'Summer 2020',s:'passed'},
+  {code:'MAT 101',title:'Differential and Integral Calculus',cr:3,grade:'A',sem:'Spring 2020',s:'passed'},
+  {code:'MAT 111',title:'Co-Ordinate Geometry & Vector Calculus',cr:3,grade:'A',sem:'Summer 2020',s:'passed'},
+  {code:'MAT 121',title:'Linear Algebras & Differential Equations',cr:3,grade:'B+',sem:'Fall 2020-21',s:'passed'},
+  {code:'MAT 231',title:'Complex Variable & Fourier Analysis',cr:3,grade:'B-',sem:'Summer 2021',s:'passed'},
+  {code:'PHY 101',title:'Physics',cr:3,grade:'A',sem:'Spring 2020',s:'passed'},
+  {code:'STA 231',title:'Statistics',cr:3,grade:'B-',sem:'Spring 2021',s:'passed'},
+  {code:'CSE 205',title:'Digital Logic Design',cr:3,grade:'F',sem:'Summer 2021',s:'failed'},
+  {code:'CSE 206',title:'Digital Logic Design Lab',cr:1.5,grade:'F',sem:'Fall 2021-22',s:'failed'},
+  {code:'CSE 208',title:'Database Systems Lab',cr:1.5,grade:'F',sem:'Summer 2021',s:'failed'},
+  {code:'CSE 232',title:'Data Structures Lab',cr:1.5,grade:'F',sem:'Fall 2020-21',s:'failed'},
+  {code:'CSE 300',title:'Software Development III',cr:0.75,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'CSE 309',title:'Operating Systems',cr:3,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'CSE 341',title:'Computer Graphics',cr:3,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'CSE 342',title:'Computer Graphics Lab',cr:0.75,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'CSE 351',title:'Artificial Intelligence & Expert System',cr:3,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'CSE 425',title:'Internet of Things',cr:3,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'CSE 426',title:'Internet of Things Lab',cr:1.5,grade:'F',sem:'Fall 2022-23',s:'failed'},
+  {code:'EEE 212',title:'Electronic Devices and Circuits Lab',cr:1.5,grade:'F',sem:'Spring 2021',s:'failed'},
+  {code:'CSE 209',title:'Data Communication',cr:3,grade:'I',sem:'Retake',s:'incomplete'},
+  {code:'CSE 224',title:'Numerical Analysis Lab',cr:1.75,grade:'I',sem:'Retake',s:'incomplete'},
+  {code:'CSE 313',title:'Mathematical Analysis for CS',cr:3,grade:'I',sem:'Retake',s:'incomplete'},
+  {code:'CSE 331',title:'Advanced Programming',cr:3,grade:'I',sem:'Retake',s:'incomplete'},
+  {code:'CSE 332',title:'Advanced Programming Lab',cr:1.5,grade:'I',sem:'Retake',s:'incomplete'},
+  {code:'CSE 215',title:'Computer Architecture',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 310',title:'Operating Systems Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 315',title:'Microprocessor & Microcontroller',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 316',title:'Microprocessor & Microcontroller Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 317',title:'System Analysis and Design',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 318',title:'System Analysis and Design Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 323',title:'Compiler Design',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 324',title:'Compiler Design Lab',cr:0.75,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 327',title:'Software Engineering',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 328',title:'Software Engineering Lab',cr:0.75,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 400',title:'Software Development IV',cr:0.75,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 407',title:'Project Management & Professional Ethics',cr:2,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 411',title:'Digital Electronics & Pulse Technique',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 412',title:'Digital Electronics & Pulse Technique Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 413',title:'Cyber Security and Digital Forensic',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 414',title:'Cyber Security and Digital Forensic Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 417',title:'Distributed Database Management Systems',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 418',title:'Distributed DBMS Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 419',title:'Blockchain Technology',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 420',title:'Blockchain Technology Lab',cr:1.5,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 498A',title:'Capstone Project (1 of 2)',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 498B',title:'Capstone Project (2 of 2)',cr:3,grade:'-',sem:'',s:'remaining'},
+  {code:'CSE 429',title:'Cyber Security & Digital Forensic (Elective)',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 430',title:'Cyber Security & Digital Forensic Lab (Elective)',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 431',title:'Communication Engineering',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 433',title:'Fiber Optics Communication',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 435',title:'Network Security',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 437',title:'Digital Signal Processing',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 438',title:'Digital Signal Processing Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 439',title:'Wireless Networking',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 440',title:'Wireless Networking Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 441',title:'Switching and Routing',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 442',title:'Switching and Routing Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 443',title:'Delay Tolerant Network',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 444',title:'Delay Tolerant Network Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 445',title:'Introduction to Cryptography',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 446',title:'Introduction to Cryptography Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 447',title:'Mobile Communication',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 448',title:'Mobile Communication Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 449',title:'Network Administration',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 450',title:'Network Administration Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 451',title:'Advanced Software Project Management',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 453',title:'Software Testing & Quality Assurance',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 455',title:'Software Security & Authentication',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 457',title:'Web Database Programming',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 458',title:'Web Database Programming Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 459',title:'Visual Programming',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 460',title:'Visual Programming Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 461',title:'Software Architecture',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 462',title:'Software Architecture Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 463',title:'Software Design Pattern',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 464',title:'Software Design Pattern Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 465',title:'Machine Learning',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 467',title:'Pattern Recognition',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 469',title:'Basic Graph Theory',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 471',title:'Computational Geometry',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 473',title:'Simulation and Modeling',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 474',title:'Simulation and Modeling Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 475',title:'Data Mining',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 476',title:'Data Mining Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 477',title:'Neural Network and Fuzzy Systems',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 478',title:'Neural Network and Fuzzy Systems Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 479',title:'VLSI Design',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 480',title:'VLSI Design Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 481',title:'Decision Support System',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 482',title:'Decision Support System Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 483',title:'Knowledge Engineering',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 484',title:'Knowledge Engineering Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 485',title:'Parallel Processing',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 487',title:'Robotics and Computer Vision',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 489',title:'Fault Tolerant System',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 491',title:'Interfacing & Peripherals',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 492',title:'Interfacing & Peripherals Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 493',title:'Digital System Design',cr:3,grade:'-',sem:'Elective',s:'remaining'},
+  {code:'CSE 494',title:'Digital System Design Lab',cr:1.5,grade:'-',sem:'Elective',s:'remaining'},
+];
+
+// ── SEMESTER UTILS ────────────────────────────────────
+const SEMS=['Spring','Summer','Fall'];
+const CURRENT={n:'Summer',y:2026};
+const PAST=['Spring 2020','Summer 2020','Fall 2020','Spring 2021','Summer 2021','Fall 2021',
+  'Spring 2022','Summer 2022','Fall 2022','Spring 2023','Summer 2023','Fall 2023',
+  'Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026'];
+function nextSem(n,y){const i=SEMS.indexOf(n);return i===2?{n:SEMS[0],y:y+1}:{n:SEMS[i+1],y};}
+function addSems(s,k){let r={...s};for(let i=0;i<k;i++)r=nextSem(r.n,r.y);return r;}
+function semKey(s){return s.n+' '+s.y;}
+
+// ── STATE ──────────────────────────────────────────────
+const STORE='bubt_courses_v2',PREF='bubt_prefs_v1';
+let courses=[],activeFilter='all',sortCol='code',sortDir=1,editIdx=null,editStatus=null,calcOpen=true;
+let prefs={crPerSem:15,elecCr:18,theme:'dark'};
+
+function loadPrefs(){try{prefs={...prefs,...JSON.parse(localStorage.getItem(PREF)||'{}')};}catch(e){}}
+function savePrefs(){localStorage.setItem(PREF,JSON.stringify(prefs));}
+function load(){
+  try{
+    const s=localStorage.getItem(STORE);
+    if(s){const p=JSON.parse(s);courses=DEFAULT_COURSES.map(d=>({...d,...(p.find(x=>x.code===d.code)||{})}));}
+    else courses=DEFAULT_COURSES.map(c=>({...c}));
+  }catch(e){courses=DEFAULT_COURSES.map(c=>({...c}));}
+}
+function save(){localStorage.setItem(STORE,JSON.stringify(courses));}
+
+// ── THEME ──────────────────────────────────────────────
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('theme-btn').textContent=t==='dark'?'☀ Light':'🌙 Dark';
+  prefs.theme=t;savePrefs();
+}
+function toggleTheme(){applyTheme(prefs.theme==='dark'?'light':'dark');}
+
+// ── CALCULATOR ────────────────────────────────────────
+function toggleCalc(){
+  calcOpen=!calcOpen;
+  document.getElementById('calc-body').classList.toggle('hidden',!calcOpen);
+  document.getElementById('calc-toggle').textContent=calcOpen?'▾ collapse':'▸ expand';
+}
+function cr(n){return Math.round(n*100)/100;}
+function fmtCr(n){const s=cr(n).toFixed(2);return s.endsWith('.00')?s.slice(0,-3):s.endsWith('0')?s.slice(0,-1):s;}
+
+function calcUpdate(){
+  const perSem=Math.max(0.75,parseFloat(document.getElementById('cr-slider').value)||15);
+  document.getElementById('cr-val').textContent=fmtCr(perSem);
+  prefs.crPerSem=perSem;
+  prefs.elecCr=parseFloat(document.getElementById('elec-input').value)||0;
+  savePrefs();
+
+  const failed=courses.filter(c=>c.s==='failed').reduce((a,c)=>a+c.cr,0);
+  const inc=courses.filter(c=>c.s==='incomplete').reduce((a,c)=>a+c.cr,0);
+  const coreRem=courses.filter(c=>c.s==='remaining'&&c.sem!=='Elective').reduce((a,c)=>a+c.cr,0);
+  const elec=parseFloat(document.getElementById('elec-input').value)||0;
+  const total=failed+inc+coreRem+elec;
+
+  document.getElementById('cr-breakdown').innerHTML=
+    `<div class="cr-row"><span class="cr-label">Failed — need retake</span><span class="cr-val red">${fmtCr(failed)} cr</span></div>`+
+    `<div class="cr-row"><span class="cr-label">Incomplete (I grade)</span><span class="cr-val amber">${fmtCr(inc)} cr</span></div>`+
+    `<div class="cr-row"><span class="cr-label">Core courses remaining</span><span class="cr-val blue">${fmtCr(coreRem)} cr</span></div>`+
+    `<div class="cr-row"><span class="cr-label">Electives (your estimate)</span><span class="cr-val blue">${fmtCr(elec)} cr</span></div>`+
+    `<div class="cr-row"><span class="cr-label bold">Total pending</span><span class="cr-val bold">${fmtCr(total)} cr</span></div>`;
+
+  const semsNeeded=Math.ceil(total/perSem);
+  const months=semsNeeded*4;
+  const yrs=Math.floor(months/12),mos=months%12;
+  const timeStr=(yrs>0?yrs+'y ':'')+( mos>0?mos+'mo':'');
+  const endSem=addSems(CURRENT,semsNeeded);
+  const endKey=semKey(endSem);
+
+  document.getElementById('res-sems').textContent=semsNeeded;
+  document.getElementById('res-sub').textContent=(timeStr||'< 1 semester')+' · '+months+' months total';
+  document.getElementById('res-date').textContent='Estimated finish: '+endKey;
+  document.getElementById('res-hint').textContent=fmtCr(perSem)+' cr/sem · 3 semesters/year · 4 months each';
+
+  const w=document.getElementById('calc-warning');
+  w.innerHTML=perSem>20?'<div class="warn-box">Above 20 cr/semester usually requires special departmental approval.</div>':
+    perSem<12?'<div class="warn-box">Below 12 cr/semester may not count as full-time enrollment.</div>':'';
+
+  // Timeline — show last 3 past + all future (max 14 shown)
+  const showMax=Math.min(semsNeeded,14);
+  let tl='<div class="tl-lbl">Semester map</div><div class="tl-items">';
+  if(PAST.length>3) tl+='<span class="tl-sem">... past</span>';
+  PAST.slice(-3).forEach(s=>tl+=`<span class="tl-sem tl-past">${s}</span>`);
+  let cur={...CURRENT};
+  for(let i=0;i<=showMax;i++){
+    const k=semKey(cur);
+    const isEnd=i===semsNeeded;
+    const cls=i===0?'tl-now':isEnd?'tl-end':'tl-future';
+    tl+=`<span class="tl-sem ${cls}">${k}${isEnd?' ✓':''}</span>`;
+    if(i<showMax) cur=nextSem(cur.n,cur.y);
+  }
+  if(semsNeeded>showMax) tl+=`<span class="tl-sem">+${semsNeeded-showMax} more</span>`;
+  tl+='</div>';
+  document.getElementById('timeline').innerHTML=tl;
+}
+
+// ── METRICS ───────────────────────────────────────────
+function buildMetrics(){
+  const c={all:courses.length,passed:0,failed:0,incomplete:0,remaining:0};
+  courses.forEach(x=>c[x.s]++);
+  const earned=courses.filter(x=>x.s==='passed').reduce((a,x)=>a+x.cr,0);
+  const total=courses.reduce((a,x)=>a+x.cr,0);
+  const data=[
+    {id:'all',lbl:'Total',val:c.all,sub:fmtCr(total)+' total credits'},
+    {id:'passed',lbl:'Passed',val:c.passed,sub:fmtCr(earned)+' cr earned'},
+    {id:'failed',lbl:'Failed',val:c.failed,sub:'need retake'},
+    {id:'incomplete',lbl:'Incomplete',val:c.incomplete,sub:'I grade / pending'},
+    {id:'remaining',lbl:'Remaining',val:c.remaining,sub:'not yet attempted'},
+  ];
+  document.getElementById('metrics').innerHTML=data.map(d=>
+    `<div class="mc ${d.id}${activeFilter===d.id?' active':''}" onclick="setFilter('${d.id}')">
+      <div class="lbl">${d.lbl}</div><div class="val">${d.val}</div><div class="sub">${d.sub}</div>
+    </div>`).join('');
+  const n=c.all||1;
+  document.getElementById('bar').innerHTML=
+    `<div class="bar-seg seg-p" style="width:${(c.passed/n*100).toFixed(1)}%"></div>`+
+    `<div class="bar-seg seg-f" style="width:${(c.failed/n*100).toFixed(1)}%"></div>`+
+    `<div class="bar-seg seg-i" style="width:${(c.incomplete/n*100).toFixed(1)}%"></div>`;
+  document.getElementById('footer-note').textContent=
+    'Saved in browser localStorage · '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function setFilter(id){activeFilter=id;buildMetrics();render();}
+
+// ── TABLE ─────────────────────────────────────────────
+function gradeClass(g){
+  if(!g||g==='-'||g==='I') return 'grade-na';
+  if(g==='F') return 'grade-fail';
+  if(g==='D'||g==='C'||g==='C-') return 'grade-ok';
+  return 'grade-good';
+}
+function badge(s){return {
+  passed:'<span class="badge bp"><span class="dot dot-p"></span>Passed</span>',
+  failed:'<span class="badge bf"><span class="dot dot-f"></span>Failed</span>',
+  incomplete:'<span class="badge bi"><span class="dot dot-i"></span>Incomplete</span>',
+  remaining:'<span class="badge br"><span class="dot dot-r"></span>Remaining</span>',
+}[s]||'';}
+
+function cycleSort(col){
+  if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=1;}
+  const m={code:'code',credit:'credit',grade:'grade',status:'status'};
+  if(m[col]) document.getElementById('sort-sel').value=m[col];
+  ['code','credit','grade','status'].forEach(c=>{
+    const th=document.getElementById('th-'+c),ar=document.getElementById('arr-'+c);
+    if(th) th.classList.toggle('sorted',sortCol===c);
+    if(ar) ar.textContent=sortCol===c?(sortDir===1?' ↑':' ↓'):'';
+  });render();
+}
+function render(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const col=document.getElementById('sort-sel').value;
+  let list=courses.filter(c=>(activeFilter==='all'||c.s===activeFilter)&&
+    (!q||c.code.toLowerCase().includes(q)||c.title.toLowerCase().includes(q)));
+  list.sort((a,b)=>{
+    let av=a[col==='credit'?'cr':col==='status'?'s':col];
+    let bv=b[col==='credit'?'cr':col==='status'?'s':col];
+    if(typeof av==='string') av=av.toLowerCase();
+    if(typeof bv==='string') bv=bv.toLowerCase();
+    return av<bv?-sortDir:av>bv?sortDir:0;
+  });
+  const tb=document.getElementById('tbody');
+  tb.innerHTML=!list.length?'<tr><td colspan="6" class="empty">No courses match.</td></tr>':
+    list.map(c=>`<tr onclick="openModal(${courses.indexOf(c)})">
+      <td class="td-code">${c.code}</td>
+      <td class="td-title" title="${c.title}">${c.title}</td>
+      <td class="td-cr">${c.cr}</td>
+      <td class="td-grade ${gradeClass(c.grade)}">${c.grade||'-'}</td>
+      <td class="td-sem">${c.sem||''}</td>
+      <td>${badge(c.s)}</td>
+    </tr>`).join('');
+  document.getElementById('count').textContent=list.length+' / '+courses.length;
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openModal(i){
+  editIdx=i;const c=courses[i];editStatus=c.s;
+  document.getElementById('m-code').textContent=c.code;
+  document.getElementById('m-title').textContent=c.title;
+  document.getElementById('m-grade').value=c.grade||'-';
+  document.getElementById('m-sem').value=c.sem||'';
+  document.querySelectorAll('.status-opt').forEach(el=>
+    el.className='status-opt'+(el.dataset.s===editStatus?' sel-'+editStatus:''));
+  document.getElementById('overlay').classList.add('open');
+}
+function selectStatus(s){
+  editStatus=s;
+  document.querySelectorAll('.status-opt').forEach(el=>
+    el.className='status-opt'+(el.dataset.s===s?' sel-'+s:''));
+  const g=document.getElementById('m-grade');
+  if(s==='remaining') g.value='-';
+  else if(s==='failed') g.value='F';
+  else if(s==='incomplete') g.value='I';
+}
+function saveModal(){
+  if(editIdx===null) return;
+  courses[editIdx].s=editStatus;
+  courses[editIdx].grade=document.getElementById('m-grade').value;
+  courses[editIdx].sem=document.getElementById('m-sem').value;
+  save();closeModalDirect();buildMetrics();calcUpdate();render();
+}
+function closeModal(e){if(e.target===document.getElementById('overlay'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('overlay').classList.remove('open');editIdx=null;}
+
+// ── IMPORT / EXPORT / RESET ───────────────────────────
+function exportData(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(courses,null,2)],{type:'application/json'}));
+  a.download='bubt_courses_backup.json';a.click();
+}
+function importData(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const p=JSON.parse(ev.target.result);
+        if(!Array.isArray(p)) throw 0;
+        localStorage.setItem(STORE,JSON.stringify(p));
+        load();buildMetrics();calcUpdate();render();alert('Import successful!');
+      }catch{alert('Invalid JSON file.');}
+    };r.readAsText(e.target.files[0]);
+  };inp.click();
+}
+function confirmReset(){
+  if(confirm('Reset all to default? This erases your saved progress.')){
+    localStorage.removeItem(STORE);load();buildMetrics();calcUpdate();render();
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalDirect();});
+loadPrefs();
+applyTheme(prefs.theme);
+load();
+buildMetrics();
+document.getElementById('cr-slider').value=prefs.crPerSem||15;
+document.getElementById('elec-input').value=prefs.elecCr||18;
+calcUpdate();
+render();
+</script>
+</body>
+</html>
