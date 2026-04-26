@@ -149,12 +149,78 @@ tbody td{padding:8px 12px;font-size:13px}
 .btn-primary:hover{opacity:.88}
 .btn-cancel{color:var(--red);border-color:var(--red-bd)}
 .btn-cancel:hover{background:var(--red-bg)}
-@media(max-width:700px){
-  .container{padding:1rem}
+/* ── MOBILE ── */
+@media(max-width:600px){
+  header{padding:.85rem 1rem;gap:.5rem}
+  header h1{font-size:13px}
+  .hint{display:none}
+  .theme-btn{padding:4px 9px;font-size:11px}
+  .container{padding:.85rem 1rem 3rem}
+
+  /* Metrics: 2+3 layout */
+  .metrics{grid-template-columns:1fr 1fr;gap:6px;margin-bottom:.6rem}
+  .mc:first-child{grid-column:1/-1}
+  .mc{padding:.7rem .85rem}
+  .mc .val{font-size:20px}
+  .mc .sub{display:none}
+
+  /* Calculator */
+  .calc-card{padding:1rem}
+  .calc-body{grid-template-columns:1fr;gap:1rem}
+  .calc-header{margin-bottom:1rem}
+  .calc-title{font-size:12px}
+  .res-num{font-size:24px}
+  .cr-breakdown{font-size:11px}
+  .cr-row{padding:6px 8px}
+  .result-box{padding:.9rem 1rem}
+
+  /* Toolbar */
+  .toolbar{gap:7px}
+  .search-wrap input{font-size:12px;padding:7px 9px 7px 28px}
+  .sort-sel{font-size:11px;padding:7px 8px}
+  .count{display:none}
+
+  /* Table: show only essential columns, make it card-like */
+  .tbl-wrap{border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:0;width:100%}
+  thead th{padding:7px 10px;font-size:9px}
+  tbody td{padding:10px 10px;font-size:12px}
+  .td-code{font-size:11px}
+  .td-title{max-width:160px}
+  .td-cr{display:none}
+  .td-sem{display:none}
+  .td-grade{display:none}
+
+  /* Make rows feel more tappable */
+  tbody tr{border-bottom:1px solid var(--border)}
+  tbody tr:active{background:var(--bg3)}
+
+  /* Modal full-screen on mobile */
+  .overlay{align-items:flex-end}
+  .modal{width:100%;max-width:100%;border-radius:16px 16px 0 0;padding:1.25rem 1.25rem 2rem;max-height:90vh;overflow-y:auto}
+  .status-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .status-opt{padding:10px;font-size:13px}
+  .modal-footer{gap:8px}
+  .btn{padding:9px 16px;font-size:13px}
+
+  /* Footer */
+  .footer-bar{gap:6px}
+  .footer-note{display:none}
+  .btn-sm{font-size:10px;padding:5px 9px}
+
+  /* Timeline wrap */
+  .tl-items{gap:3px}
+  .tl-sem{font-size:9px;padding:2px 5px}
+}
+
+/* Tablet */
+@media(min-width:601px) and (max-width:900px){
+  .container{padding:1.25rem 1.25rem 3rem}
   .metrics{grid-template-columns:repeat(3,1fr)}
-  header{padding:1rem}
+  .mc:nth-child(1){grid-column:1/-1}
   .td-sem{display:none}
   .calc-body{grid-template-columns:1fr}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
 </style>
 </head>
@@ -253,6 +319,7 @@ tbody td{padding:8px 12px;font-size:13px}
 <!-- MODAL -->
 <div class="overlay" id="overlay" onclick="closeModal(event)">
   <div class="modal">
+    <div class="modal-drag-handle" style="width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 1rem;display:none" id="drag-handle"></div>
     <div class="modal-header">
       <div>
         <div class="modal-code" id="m-code"></div>
@@ -645,6 +712,9 @@ function confirmReset(){
 }
 
 // ── INIT ──────────────────────────────────────────────
+// Show drag handle on mobile
+if(window.innerWidth<=600) document.getElementById('drag-handle').style.display='block';
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalDirect();});
 loadPrefs();
 applyTheme(prefs.theme);
